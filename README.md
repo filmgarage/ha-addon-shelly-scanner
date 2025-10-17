@@ -1,5 +1,6 @@
 # Shelly Device Scanner Add-on for Home Assistant
 
+WARNING: This version is not functioning yet. IN DEVELOPMENT
 This add-on scans your local network for Shelly devices and displays detailed information about each discovered device.
 
 ## Installation
