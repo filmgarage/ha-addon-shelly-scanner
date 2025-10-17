@@ -20,4 +20,4 @@ options:
   admin_password: ""
 schema:
   admin_password: password
-image: ghcr.io/{username}/hassio-shelly-scanner-{arch}
+image: ghcr.io/filmgarage/hassio-shelly-scanner-{arch}
