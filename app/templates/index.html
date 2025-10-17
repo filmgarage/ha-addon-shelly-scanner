@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shelly Device Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #58a6ff;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .controls {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2ea043;
+        }
+
+        button:disabled {
+            background: #21262d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background: #1c2128;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #8b949e;
+        }
+
+        .devices {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .device-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 20px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .device-card:hover {
+            transform: translateY(-2px);
+            border-color: #58a6ff;
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .device-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .device-type {
+            background: #1f6feb;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .device-info {
+            display: grid;
+            gap: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #21262d;
+            font-size: 14px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #8b949e;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #c9d1d9;
+            font-family: 'Courier New', monospace;
+        }
+
+        .auth-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .auth-required {
+            background: #bb800966;
+            color: #f0883e;
+        }
+
+        .auth-enabled {
+            background: #238636;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8b949e;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #21262d;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .no-devices {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8b949e;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+        }
+
+        .no-devices-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Shelly Device Scanner</h1>
+        
+        <div class="controls">
+            <button id="scanBtn" onclick="startScan()">Scan Netwerk</button>
+            <div class="status" id="status">Klik op "Scan Netwerk" om te beginnen</div>
+        </div>
+
+        <div id="deviceList" class="devices"></div>
+    </div>
+
+    <script>
+        let isScanning = false;
+
+        async function startScan() {
+            if (isScanning) return;
+            
+            isScanning = true;
+            const btn = document.getElementById('scanBtn');
+            const status = document.getElementById('status');
+            const deviceList = document.getElementById('deviceList');
+            
+            btn.disabled = true;
+            status.textContent = 'Bezig met scannen...';
+            deviceList.innerHTML = '<div class="loading"><div class="spinner"></div><div>Netwerk wordt gescand...</div></div>';
+            
+            try {
+                const response = await fetch('/api/scan');
+                const devices = await response.json();
+                
+                displayDevices(devices);
+                status.textContent = `Scan voltooid. ${devices.length} Shelly device(s) gevonden.`;
+            } catch (error) {
+                status.textContent = 'Fout bij scannen: ' + error.message;
+                deviceList.innerHTML = '<div class="no-devices"><div class="no-devices-icon">⚠️</div><div>Er is een fout opgetreden</div></div>';
+            } finally {
+                isScanning = false;
+                btn.disabled = false;
+            }
+        }
+
+        function displayDevices(devices) {
+            const deviceList = document.getElementById('deviceList');
+            
+            if (devices.length === 0) {
+                deviceList.innerHTML = '<div class="no-devices"><div class="no-devices-icon">🔍</div><div>Geen Shelly devices gevonden</div></div>';
+                return;
+            }
+            
+            deviceList.innerHTML = devices.map(device => `
+                <div class="device-card">
+                    <div class="device-header">
+                        <div class="device-name">${escapeHtml(device.name)}</div>
+                        <div class="device-type">${escapeHtml(device.type)}</div>
+                    </div>
+                    <div class="device-info">
+                        <div class="info-row">
+                            <span class="info-label">IP Adres:</span>
+                            <span class="info-value">${escapeHtml(device.ip)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">MAC Adres:</span>
+                            <span class="info-value">${escapeHtml(device.mac)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Firmware:</span>
+                            <span class="info-value">${escapeHtml(device.fw)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Authenticatie:</span>
+                            <span class="auth-badge ${device.auth ? 'auth-enabled' : 'auth-required'}">
+                                ${device.auth ? 'Ingeschakeld' : 'Uitgeschakeld'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+</body>
+</html>
