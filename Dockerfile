@@ -7,7 +7,9 @@ ENV LANG C.UTF-8
 RUN apk add --no-cache \
     python3 \
     py3-pip \
-    py3-flask
+    py3-flask \
+    py3-requests \
+    && pip3 install --no-cache-dir requests
 
 # Copy application files
 COPY run.sh /
