@@ -15,7 +15,9 @@ def get_local_ip():
     try:
         s.connect(('10.255.255.255', 1))
         ip = s.getsockname()[0]
-    except Exception:
+        print(f"Local IP detected: {ip}")
+    except Exception as e:
+        print(f"Error getting local IP: {e}")
         ip = '127.0.0.1'
     finally:
         s.close()
@@ -26,6 +28,7 @@ def get_network_range():
     local_ip = get_local_ip()
     # Assume /24 network
     network = ipaddress.IPv4Network(f"{local_ip}/24", strict=False)
+    print(f"Scanning network range: {network}")
     return network
 
 def check_shelly_device(ip):
