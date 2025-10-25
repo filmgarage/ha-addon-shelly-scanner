@@ -77,56 +77,79 @@
             overflow: hidden;
         }
 
-        .device-row {
-            display: grid;
-            grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1fr 1fr;
-            padding: 16px 20px;
-            border-bottom: 1px solid #21262d;
-            transition: background 0.1s;
-            align-items: center;
-            gap: 16px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .device-row:hover {
-            background: #1c2128;
-        }
-
-        .device-row:last-child {
-            border-bottom: none;
-        }
-
-        .device-header {
-            display: grid;
-            grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1fr 1fr;
-            padding: 12px 20px;
+        thead {
             background: #0d1117;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
             font-weight: 600;
             font-size: 12px;
             text-transform: uppercase;
             color: #8b949e;
             letter-spacing: 0.5px;
-            gap: 16px;
             border-bottom: 1px solid #30363d;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
         }
 
-        .device-name {
-            font-size: 14px;
-            font-weight: 500;
+        th:hover {
+            background: #161b22;
             color: #c9d1d9;
         }
 
-        .device-value {
-            font-size: 14px;
-            color: #8b949e;
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.3;
+            font-size: 10px;
         }
 
-        .device-value a {
+        th.sort-asc::after {
+            content: ' ▲';
+            opacity: 1;
+        }
+
+        th.sort-desc::after {
+            content: ' ▼';
+            opacity: 1;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #21262d;
+            transition: background 0.1s;
+        }
+
+        tbody tr:hover {
+            background: #1c2128;
+        }
+
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        td {
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #c9d1d9;
+        }
+
+        td a {
             color: #58a6ff;
             text-decoration: none;
             transition: color 0.2s;
         }
 
-        .device-value a:hover {
+        td a:hover {
             color: #79c0ff;
             text-decoration: underline;
         }
@@ -139,6 +162,7 @@
             font-size: 12px;
             font-weight: 600;
             display: inline-block;
+            white-space: nowrap;
         }
 
         .auth-badge {
@@ -147,6 +171,7 @@
             border-radius: 12px;
             font-size: 11px;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .auth-enabled {
@@ -202,7 +227,7 @@
             <div class="status" id="status">Klik op "Scan Netwerk" om te beginnen</div>
         </div>
 
-        <div id="deviceList" class="devices"></div>
+        <div id="deviceList"></div>
     </div>
 
     <script>
@@ -243,34 +268,36 @@
                 return;
             }
             
-            deviceList.innerHTML = devices.map(device => `
-                <div class="device-card">
+            deviceList.innerHTML = `
+                <div class="device-list">
                     <div class="device-header">
-                        <div class="device-name">${escapeHtml(device.name)}</div>
-                        <div class="device-type">${escapeHtml(device.type)}</div>
+                        <div>Naam</div>
+                        <div>Type</div>
+                        <div>IP Adres</div>
+                        <div>MAC Adres</div>
+                        <div>Firmware</div>
+                        <div>Authenticatie</div>
                     </div>
-                    <div class="device-info">
-                        <div class="info-row">
-                            <span class="info-label">IP Adres:</span>
-                            <span class="info-value">${escapeHtml(device.ip)}</span>
+                    ${devices.map(device => `
+                        <div class="device-row">
+                            <div class="device-name">${escapeHtml(device.name)}</div>
+                            <div class="device-value">
+                                <span class="device-type-badge">${escapeHtml(device.type)}</span>
+                            </div>
+                            <div class="device-value">
+                                <a href="http://${escapeHtml(device.ip)}" target="_blank">${escapeHtml(device.ip)}</a>
+                            </div>
+                            <div class="device-value">${escapeHtml(device.mac)}</div>
+                            <div class="device-value">${escapeHtml(device.fw)}</div>
+                            <div class="device-value">
+                                <span class="auth-badge ${device.auth ? 'auth-enabled' : 'auth-disabled'}">
+                                    ${device.auth ? 'Aan' : 'Uit'}
+                                </span>
+                            </div>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">MAC Adres:</span>
-                            <span class="info-value">${escapeHtml(device.mac)}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Firmware:</span>
-                            <span class="info-value">${escapeHtml(device.fw)}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Authenticatie:</span>
-                            <span class="auth-badge ${device.auth ? 'auth-enabled' : 'auth-required'}">
-                                ${device.auth ? 'Ingeschakeld' : 'Uitgeschakeld'}
-                            </span>
-                        </div>
-                    </div>
+                    `).join('')}
                 </div>
-            `).join('');
+            `;
         }
 
         function escapeHtml(text) {
