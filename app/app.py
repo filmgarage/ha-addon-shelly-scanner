@@ -4,12 +4,33 @@ import requests
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ipaddress
+import logging
 
-app = Flask(__name__, static_folder='static', static_url_path='/static')
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+# Get ingress entry point from environment
+INGRESS_ENTRY = os.environ.get('INGRESS_ENTRY', '/')
+logger.info(f"Ingress entry point: {INGRESS_ENTRY}")
+
+app = Flask(__name__, static_folder='static', static_url_path=f'{INGRESS_ENTRY}static'.rstrip('/'))
 
 # Support for ingress mode - trust X-Forwarded headers from Home Assistant
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Log all requests
+@app.before_request
+def log_request():
+    logger.info(f"Request: {request.method} {request.path}")
+    logger.info(f"Headers: {dict(request.headers)}")
+
+# Log all responses
+@app.after_request
+def log_response(response):
+    logger.info(f"Response: {response.status_code} for {request.path}")
+    return response
 
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 
@@ -147,10 +168,37 @@ def scan_network():
 def index():
     return render_template('index.html')
 
+@app.route('/debug-page')
+def debug_page():
+    """Debug page with inline CSS"""
+    return render_template('debug.html')
+
 @app.route('/health')
 def health():
     """Health check endpoint for Home Assistant"""
     return jsonify({'status': 'ok'}), 200
+
+@app.route('/debug')
+def debug():
+    """Debug endpoint to see Flask configuration"""
+    import sys
+    return jsonify({
+        'status': 'debug',
+        'static_folder': app.static_folder,
+        'static_url_path': app.static_url_path,
+        'root_path': app.root_path,
+        'base_url': request.base_url,
+        'url_root': request.url_root,
+        'script_root': request.script_root,
+        'path': request.path,
+        'full_path': request.full_path,
+        'environment': {
+            'INGRESS_PORT': os.environ.get('INGRESS_PORT'),
+            'PORT': os.environ.get('PORT'),
+            'INGRESS_ENTRY': os.environ.get('INGRESS_ENTRY'),
+        },
+        'headers': dict(request.headers)
+    }), 200
 
 @app.route('/api/scan')
 def scan():
@@ -269,7 +317,9 @@ if __name__ == '__main__':
     print(f"Host: 0.0.0.0", file=sys.stderr)
     print(f"Port: {port}", file=sys.stderr)
     print(f"Admin Password Set: {'Yes' if ADMIN_PASSWORD else 'No'}", file=sys.stderr)
+    print(f"Debug Mode: True", file=sys.stderr)
     print("=" * 50, file=sys.stderr)
     sys.stderr.flush()
     
-    app.run(host='0.0.0.0', port=port, debug=False)
+    # Enable debug mode for troubleshooting
+    app.run(host='0.0.0.0', port=port, debug=True)
