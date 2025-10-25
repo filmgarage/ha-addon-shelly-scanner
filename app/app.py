@@ -5,7 +5,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ipaddress
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 
