@@ -138,7 +138,9 @@ function displayDevices(devices) {
                                 </div>
                             </td>
                             <td>
-                                <span class="auth-badge ${device.auth ? 'auth-enabled' : 'auth-disabled'}">
+                                <span class="auth-badge ${device.auth ? 'auth-enabled' : 'auth-disabled'}" 
+                                      onclick="toggleAuth('${device.ip}', ${device.auth}, event)"
+                                      title="Click to ${device.auth ? 'disable' : 'enable'} authentication">
                                     ${device.auth ? i18n.t('auth_enabled') : i18n.t('auth_disabled')}
                                 </span>
                             </td>
@@ -208,5 +210,63 @@ async function updateFirmware(ip, event) {
             btn.style.background = '';
             btn.disabled = false;
         }, 3000);
+    }
+}
+
+async function toggleAuth(ip, currentlyEnabled, event) {
+    const badge = event.target;
+    const originalText = badge.textContent;
+    
+    // Check if password is configured
+    const hasPassword = true; // We'll validate server-side
+    
+    // Show appropriate warning
+    const enable = !currentlyEnabled;
+    const message = enable 
+        ? i18n.t('auth_toggle_enable_message', { ip: ip })
+        : i18n.t('auth_toggle_disable_message', { ip: ip });
+    
+    if (!confirm(message)) {
+        return;
+    }
+    
+    // Disable badge during operation
+    badge.classList.add('disabled');
+    badge.textContent = i18n.t('auth_toggling');
+    
+    try {
+        const response = await fetch(`/api/auth/${ip}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ enable: enable })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Update badge appearance
+            badge.textContent = i18n.t('auth_toggle_success');
+            
+            // Refresh device list after 2 seconds to show new state
+            setTimeout(() => {
+                startScan();
+            }, 2000);
+        } else {
+            badge.textContent = i18n.t('auth_toggle_failed');
+            alert(i18n.t('auth_toggle_error', { error: data.error || 'Unknown error' }));
+            setTimeout(() => {
+                badge.textContent = originalText;
+                badge.classList.remove('disabled');
+            }, 2000);
+        }
+    } catch (error) {
+        badge.textContent = i18n.t('auth_toggle_failed');
+        alert(i18n.t('auth_toggle_error', { error: error.message }));
+        setTimeout(() => {
+            badge.textContent = originalText;
+            badge.classList.remove('disabled');
+        }, 2000);
     }
 }
