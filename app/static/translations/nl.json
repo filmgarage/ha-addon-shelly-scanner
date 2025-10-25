@@ -19,5 +19,16 @@
   "auth_enabled": "Aan",
   "auth_disabled": "Uit",
   "password_required": "🔒 Wachtwoord Vereist",
-  "gen_prefix": "Gen"
+  "gen_prefix": "Gen",
+  "fw_latest": "Laatste versie",
+  "fw_update_to": "Update naar {version}",
+  "fw_update_btn": "Nu Updaten",
+  "fw_set_password": "Stel wachtwoord in om updates mogelijk te maken",
+  "fw_updating": "Bezig met updaten...",
+  "fw_updated": "✓ Geüpdatet",
+  "fw_failed": "✗ Mislukt",
+  "fw_error": "✗ Fout",
+  "fw_update_confirm": "Weet je zeker dat je de firmware op {ip} wilt updaten?\n\nHet apparaat zal herstarten en kan enkele minuten onbeschikbaar zijn.",
+  "fw_update_error": "Update mislukt: {error}",
+  "fw_network_error": "Update fout: {error}"
 }
