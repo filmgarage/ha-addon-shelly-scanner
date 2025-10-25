@@ -16,10 +16,11 @@
             background: #0d1117;
             color: #c9d1d9;
             padding: 20px;
+            line-height: 1.6;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -27,6 +28,7 @@
             color: #58a6ff;
             margin-bottom: 30px;
             font-size: 28px;
+            font-weight: 400;
         }
 
         .controls {
@@ -68,93 +70,93 @@
             color: #8b949e;
         }
 
-        .devices {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .device-card {
+        .device-list {
             background: #161b22;
             border: 1px solid #30363d;
             border-radius: 6px;
-            padding: 20px;
-            transition: transform 0.2s, border-color 0.2s;
+            overflow: hidden;
         }
 
-        .device-card:hover {
-            transform: translateY(-2px);
-            border-color: #58a6ff;
-        }
-
-        .device-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #21262d;
-        }
-
-        .device-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #58a6ff;
-        }
-
-        .device-type {
-            background: #1f6feb;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .device-info {
+        .device-row {
             display: grid;
-            gap: 10px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
+            grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1fr 1fr;
+            padding: 16px 20px;
             border-bottom: 1px solid #21262d;
-            font-size: 14px;
+            transition: background 0.1s;
+            align-items: center;
+            gap: 16px;
         }
 
-        .info-row:last-child {
+        .device-row:hover {
+            background: #1c2128;
+        }
+
+        .device-row:last-child {
             border-bottom: none;
         }
 
-        .info-label {
+        .device-header {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1fr 1fr;
+            padding: 12px 20px;
+            background: #0d1117;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
             color: #8b949e;
-            font-weight: 500;
+            letter-spacing: 0.5px;
+            gap: 16px;
+            border-bottom: 1px solid #30363d;
         }
 
-        .info-value {
+        .device-name {
+            font-size: 14px;
+            font-weight: 500;
             color: #c9d1d9;
-            font-family: 'Courier New', monospace;
+        }
+
+        .device-value {
+            font-size: 14px;
+            color: #8b949e;
+        }
+
+        .device-value a {
+            color: #58a6ff;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .device-value a:hover {
+            color: #79c0ff;
+            text-decoration: underline;
+        }
+
+        .device-type-badge {
+            background: #1f6feb20;
+            color: #58a6ff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
         }
 
         .auth-badge {
             display: inline-block;
-            padding: 2px 8px;
+            padding: 4px 10px;
             border-radius: 12px;
             font-size: 11px;
             font-weight: 600;
         }
 
-        .auth-required {
-            background: #bb800966;
-            color: #f0883e;
-        }
-
         .auth-enabled {
             background: #238636;
             color: white;
+        }
+
+        .auth-disabled {
+            background: #6e768166;
+            color: #8b949e;
         }
 
         .loading {
@@ -182,9 +184,6 @@
             text-align: center;
             padding: 60px 20px;
             color: #8b949e;
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
         }
 
         .no-devices-icon {
