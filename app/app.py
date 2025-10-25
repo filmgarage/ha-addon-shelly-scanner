@@ -52,11 +52,11 @@ def check_shelly_device(ip):
                     'generation': 2
                 }
                 
-                # Try to get additional config if available
+                # Try to get additional config if available (Gen2+ only uses password, no username)
                 if ADMIN_PASSWORD and device_info['auth']:
                     config_url = f"http://{ip}/rpc/Shelly.GetConfig"
                     try:
-                        # Gen2+ uses only password in query string, no username
+                        # Gen2+ uses only password in query string, no username needed
                         config_response = requests.get(
                             f"{config_url}?password={ADMIN_PASSWORD}",
                             timeout=2
@@ -72,7 +72,7 @@ def check_shelly_device(ip):
         except:
             pass
         
-        # Try Gen1 API
+        # Try Gen1 API (HTTP-based)
         gen1_url = f"http://{ip}/shelly"
         response = requests.get(gen1_url, timeout=2)
         
@@ -155,6 +155,40 @@ def device_info(ip):
     if device:
         return jsonify(device)
     return jsonify({'error': 'Device not found'}), 404
+
+@app.route('/api/update/<ip>', methods=['POST'])
+def update_device(ip):
+    """Trigger firmware update on device"""
+    try:
+        # First detect which generation
+        device = check_shelly_device(ip)
+        if not device:
+            return jsonify({'error': 'Device not found'}), 404
+        
+        if device['generation'] == 2:
+            # Gen2+ update via RPC
+            update_url = f"http://{ip}/rpc/Shelly.Update"
+            params = {'stage': 'stable'}
+            if ADMIN_PASSWORD:
+                params['password'] = ADMIN_PASSWORD
+            
+            response = requests.post(update_url, json=params, timeout=5)
+            if response.status_code == 200:
+                return jsonify({'success': True, 'message': 'Update started'})
+        else:
+            # Gen1 update
+            update_url = f"http://{ip}/ota?update=true"
+            if ADMIN_PASSWORD:
+                response = requests.get(update_url, auth=('admin', ADMIN_PASSWORD), timeout=5)
+            else:
+                response = requests.get(update_url, timeout=5)
+            
+            if response.status_code == 200:
+                return jsonify({'success': True, 'message': 'Update started'})
+        
+        return jsonify({'error': 'Update failed'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8099, debug=False)
