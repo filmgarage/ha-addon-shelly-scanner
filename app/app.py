@@ -32,9 +32,9 @@ def get_network_range():
     return network
 
 def check_shelly_device(ip):
-    """Check if IP is a Shelly device and get info"""
+    """Check if IP is a Shelly device and get info. Supports both Gen1 and Gen2+ devices."""
     try:
-        # First try Gen2 API
+        # First try Gen2+ API (RPC-based)
         gen2_url = f"http://{ip}/rpc/Shelly.GetDeviceInfo"
         try:
             response = requests.get(gen2_url, timeout=2)
@@ -88,16 +88,18 @@ def check_shelly_device(ip):
                 'generation': 1
             }
             
-            # Try to get settings
+            # Try to get settings (Gen1 uses 'admin' username)
             settings_url = f"http://{ip}/settings"
             try:
                 if ADMIN_PASSWORD:
+                    # Gen1 requires username 'admin' and password
                     settings_response = requests.get(
                         settings_url,
                         auth=('admin', ADMIN_PASSWORD),
                         timeout=2
                     )
                 else:
+                    # Try without authentication
                     settings_response = requests.get(settings_url, timeout=2)
                 
                 if settings_response.status_code == 200:
