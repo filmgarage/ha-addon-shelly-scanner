@@ -1,0 +1,23 @@
+{
+  "app_title": "Shelly Device Scanner",
+  "page_title": "🔌 Shelly Device Scanner",
+  "scan_button": "Scan Network",
+  "scan_status_ready": "Click 'Scan Network' to begin",
+  "scan_status_scanning": "Scanning network...",
+  "scan_status_complete": "Scan complete. {count} Shelly device(s) found.",
+  "scan_status_error": "Error while scanning: {error}",
+  "loading_message": "Scanning network...",
+  "no_devices_found": "No Shelly devices found",
+  "error_occurred": "An error occurred",
+  "table_header_name": "Name",
+  "table_header_type": "Type",
+  "table_header_gen": "Gen",
+  "table_header_ip": "IP Address",
+  "table_header_mac": "MAC Address",
+  "table_header_fw": "Firmware",
+  "table_header_auth": "Auth",
+  "auth_enabled": "On",
+  "auth_disabled": "Off",
+  "password_required": "🔒 Password Required",
+  "gen_prefix": "Gen"
+}
