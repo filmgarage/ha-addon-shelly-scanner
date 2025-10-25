@@ -1,0 +1,506 @@
+/* Home Assistant Material Design Theme for Shelly Scanner */
+/* Based on Material Design Web Components and HA 2024.4+ styling */
+
+:root {
+  /* HA Color Palette */
+  --primary-color: #03a9f4;
+  --accent-color: #ff9800;
+  --text-primary-color: #212121;
+  --primary-background-color: #fafafa;
+  --secondary-background-color: #e5e5e5;
+  --divider-color: rgba(0, 0, 0, 0.12);
+  --card-background-color: #ffffff;
+  
+  /* Dark theme colors (HA default) */
+  --ha-card-background: #1c1c1c;
+  --primary-text-color: #e1e1e1;
+  --secondary-text-color: #9b9b9b;
+  --disabled-text-color: #6f6f6f;
+  --sidebar-selected-text-color: #ffffff;
+  --sidebar-selected-icon-color: #ffffff;
+  
+  /* Data table specific */
+  --mdc-theme-surface: #111111;
+  --mdc-theme-on-surface: #e1e1e1;
+  --data-table-background-color: #1c1c1c;
+  --mdc-ripple-color: rgba(3, 169, 244, 0.12);
+  
+  /* State colors */
+  --state-icon-active-color: #03a9f4;
+  --state-icon-unavailable-color: #6f6f6f;
+  --state-on-color: #66bb6a;
+  --state-off-color: #f44336;
+  
+  /* Spacing */
+  --mdc-layout-grid-margin: 24px;
+  --mdc-layout-grid-gutter: 24px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Roboto, sans-serif;
+  background: #111111;
+  color: var(--primary-text-color);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Material Design Data Table */
+.mdc-data-table {
+  background-color: var(--data-table-background-color);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  width: 100%;
+}
+
+.mdc-data-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* Table Header */
+.mdc-data-table__header-row {
+  background-color: transparent;
+  height: 56px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.mdc-data-table__header-cell {
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--secondary-text-color);
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.mdc-data-table__header-cell:hover {
+  color: var(--primary-text-color);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.mdc-data-table__header-cell--sorted {
+  color: var(--primary-color);
+}
+
+.mdc-data-table__header-cell::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.3;
+}
+
+.mdc-data-table__header-cell--sorted-ascending::after {
+  content: '▲';
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.mdc-data-table__header-cell--sorted-descending::after {
+  content: '▼';
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+/* Table Rows */
+.mdc-data-table__row {
+  height: 52px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mdc-data-table__row:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.mdc-data-table__row:last-child {
+  border-bottom: none;
+}
+
+.mdc-data-table__row--selected {
+  background-color: rgba(3, 169, 244, 0.08);
+}
+
+.mdc-data-table__row--selected:hover {
+  background-color: rgba(3, 169, 244, 0.12);
+}
+
+.mdc-data-table__cell {
+  padding: 0 16px;
+  font-size: 14px;
+  color: var(--primary-text-color);
+  text-align: left;
+}
+
+/* Checkbox styling */
+.mdc-data-table__header-cell--checkbox,
+.mdc-data-table__cell--checkbox {
+  width: 60px;
+  padding-left: 16px;
+  padding-right: 0;
+}
+
+.mdc-checkbox {
+  display: inline-block;
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+
+.mdc-checkbox__native-control {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+}
+
+.mdc-checkbox__background {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--secondary-text-color);
+  border-radius: 2px;
+  background-color: transparent;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.mdc-checkbox__native-control:checked ~ .mdc-checkbox__background {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.mdc-checkbox__checkmark {
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mdc-checkbox__native-control:checked ~ .mdc-checkbox__background .mdc-checkbox__checkmark {
+  opacity: 1;
+}
+
+/* Toolbar */
+.ha-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background-color: var(--ha-card-background);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  min-height: 64px;
+}
+
+.ha-toolbar__search {
+  flex: 1;
+  max-width: 400px;
+}
+
+.mdc-text-field {
+  height: 40px;
+  width: 100%;
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mdc-text-field:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.mdc-text-field:focus-within {
+  border-color: var(--primary-color);
+  background-color: rgba(255, 255, 255, 0.09);
+}
+
+.mdc-text-field__input {
+  width: 100%;
+  height: 100%;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  color: var(--primary-text-color);
+  font-size: 14px;
+  outline: none;
+}
+
+.mdc-text-field__input::placeholder {
+  color: var(--secondary-text-color);
+}
+
+/* Buttons */
+.mdc-button {
+  height: 40px;
+  min-width: 64px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  background-color: transparent;
+  color: var(--primary-color);
+}
+
+.mdc-button:hover {
+  background-color: rgba(3, 169, 244, 0.08);
+}
+
+.mdc-button--raised {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.mdc-button--raised:hover {
+  background-color: #0288d1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.24);
+}
+
+.mdc-button:disabled {
+  color: var(--disabled-text-color);
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+/* Icon Button */
+.mdc-icon-button {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--secondary-text-color);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mdc-icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+/* Container */
+.ha-view {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--secondary-text-color);
+}
+
+.mdc-circular-progress {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--secondary-text-color);
+}
+
+.empty-state__icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state__message {
+  font-size: 16px;
+}
+
+/* Device type badge */
+.device-type-badge {
+  background: #1f6feb20;
+  color: #58a6ff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Firmware status colors */
+.fw-latest {
+  color: #3fb950;
+  font-weight: 600;
+}
+
+.fw-outdated {
+  color: #f85149;
+  font-weight: 600;
+}
+
+.fw-cell {
+  position: relative;
+  cursor: pointer;
+}
+
+.fw-tooltip {
+  visibility: hidden;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  background: #1c2128;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 12px;
+  min-width: 200px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.fw-cell:hover .fw-tooltip {
+  visibility: visible;
+}
+
+.fw-tooltip-text {
+  color: #c9d1d9;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.fw-update-btn {
+  background: #238636;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.fw-update-btn:hover {
+  background: #2ea043;
+}
+
+.fw-update-btn:active {
+  background: #26a641;
+}
+
+.fw-update-btn:disabled {
+  background: #21262d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Auth badge */
+.auth-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.auth-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.auth-badge:active {
+  transform: scale(0.95);
+}
+
+.auth-enabled {
+  background: #238636;
+  color: white;
+}
+
+.auth-enabled:hover {
+  background: #2ea043;
+}
+
+.auth-disabled {
+  background: #6e768166;
+  color: #8b949e;
+}
+
+.auth-disabled:hover {
+  background: #6e768188;
+  color: #c9d1d9;
+}
+
+.auth-badge.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.auth-badge.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Link styling */
+.mdc-data-table__cell a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 150ms;
+}
+
+.mdc-data-table__cell a:hover {
+  color: #0288d1;
+  text-decoration: underline;
+}
