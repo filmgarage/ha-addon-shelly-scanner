@@ -9,7 +9,7 @@ RUN apk add --no-cache \
     py3-pip \
     py3-flask \
     py3-requests \
-    && pip3 install --no-cache-dir requests
+    && pip3 install --no-cache-dir --break-system-packages requests werkzeug
 
 # Copy application files
 COPY run.sh /
