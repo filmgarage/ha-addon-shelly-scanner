@@ -81,6 +81,7 @@ function displayDevices(devices) {
                     <tr>
                         <th class="${getSortClass('name')}" onclick="sortDevices('name')">Naam</th>
                         <th class="${getSortClass('type')}" onclick="sortDevices('type')">Type</th>
+                        <th class="${getSortClass('generation')}" onclick="sortDevices('generation')">Gen</th>
                         <th class="${getSortClass('ip')}" onclick="sortDevices('ip')">IP Adres</th>
                         <th class="${getSortClass('mac')}" onclick="sortDevices('mac')">MAC Adres</th>
                         <th class="${getSortClass('fw')}" onclick="sortDevices('fw')">Firmware</th>
@@ -92,6 +93,7 @@ function displayDevices(devices) {
                         <tr>
                             <td>${escapeHtml(device.name)}</td>
                             <td><span class="device-type-badge">${escapeHtml(device.type)}</span></td>
+                            <td>Gen${device.generation || 1}</td>
                             <td><a href="http://${escapeHtml(device.ip)}" target="_blank">${escapeHtml(device.ip)}</a></td>
                             <td>${escapeHtml(device.mac)}</td>
                             <td>${escapeHtml(device.fw)}</td>
