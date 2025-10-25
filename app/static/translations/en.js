@@ -19,5 +19,16 @@
   "auth_enabled": "On",
   "auth_disabled": "Off",
   "password_required": "🔒 Password Required",
-  "gen_prefix": "Gen"
+  "gen_prefix": "Gen",
+  "fw_latest": "Latest version",
+  "fw_update_to": "Update to {version}",
+  "fw_update_btn": "Update Now",
+  "fw_set_password": "Set password to enable updates",
+  "fw_updating": "Updating...",
+  "fw_updated": "✓ Updated",
+  "fw_failed": "✗ Failed",
+  "fw_error": "✗ Error",
+  "fw_update_confirm": "Are you sure you want to update the firmware on {ip}?\n\nThe device will reboot and may be unavailable for a few minutes.",
+  "fw_update_error": "Update failed: {error}",
+  "fw_network_error": "Update error: {error}"
 }
