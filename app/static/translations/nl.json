@@ -2,6 +2,7 @@
   "app_title": "Shelly Apparaat Scanner",
   "page_title": "🔌 Shelly Apparaat Scanner",
   "scan_button": "Scan Netwerk",
+  "search_placeholder": "Zoek apparaten...",
   "scan_status_ready": "Klik op 'Scan Netwerk' om te beginnen",
   "scan_status_scanning": "Bezig met scannen...",
   "scan_status_complete": "Scan voltooid. {count} Shelly apparaat/apparaten gevonden.",
