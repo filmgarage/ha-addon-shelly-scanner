@@ -1,19 +1,46 @@
 let isScanning = false;
 let devicesData = [];
+let filteredDevices = [];
 let sortColumn = 'name';
 let sortDirection = 'asc';
+let selectionMode = false;
+let selectedDevices = new Set();
 
 // Initialize i18n and UI
 async function initializeApp() {
     await i18n.init();
     updateUIText();
+    setupSearchListener();
 }
 
 function updateUIText() {
     document.title = i18n.t('app_title');
-    document.getElementById('pageTitle').textContent = i18n.t('page_title');
-    document.getElementById('scanBtn').textContent = i18n.t('scan_button');
-    document.getElementById('status').textContent = i18n.t('scan_status_ready');
+    document.getElementById('scanBtnText').textContent = i18n.t('scan_button');
+    document.getElementById('searchInput').placeholder = i18n.t('search_placeholder') || 'Search devices...';
+    document.getElementById('statusMessage').textContent = i18n.t('scan_status_ready');
+}
+
+function setupSearchListener() {
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', (e) => {
+        filterDevices(e.target.value);
+    });
+}
+
+function filterDevices(searchTerm) {
+    if (!searchTerm.trim()) {
+        filteredDevices = [...devicesData];
+    } else {
+        const term = searchTerm.toLowerCase();
+        filteredDevices = devicesData.filter(device => 
+            device.name.toLowerCase().includes(term) ||
+            device.ip.includes(term) ||
+            device.mac.toLowerCase().includes(term) ||
+            device.type.toLowerCase().includes(term) ||
+            device.fw.toLowerCase().includes(term)
+        );
+    }
+    displayDevices(filteredDevices);
 }
 
 // Wait for DOM and i18n to be ready
@@ -24,26 +51,30 @@ async function startScan() {
     
     isScanning = true;
     const btn = document.getElementById('scanBtn');
-    const status = document.getElementById('status');
-    const deviceList = document.getElementById('deviceList');
+    const btnText = document.getElementById('scanBtnText');
+    const status = document.getElementById('statusMessage');
+    const deviceTable = document.getElementById('deviceTable');
     
     btn.disabled = true;
+    btnText.textContent = i18n.t('scan_status_scanning');
     status.textContent = i18n.t('scan_status_scanning');
-    deviceList.innerHTML = `<div class="loading"><div class="spinner"></div><div>${i18n.t('loading_message')}</div></div>`;
+    deviceTable.innerHTML = '<div class="loading"><div class="mdc-circular-progress"></div><div>' + i18n.t('loading_message') + '</div></div>';
     
     try {
         const response = await fetch('/api/scan');
         const devices = await response.json();
         
         devicesData = devices;
-        displayDevices(devices);
+        filteredDevices = [...devices];
+        displayDevices(filteredDevices);
         status.textContent = i18n.t('scan_status_complete', { count: devices.length });
     } catch (error) {
         status.textContent = i18n.t('scan_status_error', { error: error.message });
-        deviceList.innerHTML = `<div class="no-devices"><div class="no-devices-icon">⚠️</div><div>${i18n.t('error_occurred')}</div></div>`;
+        deviceTable.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⚠️</div><div class="empty-state__message">' + i18n.t('error_occurred') + '</div></div>';
     } finally {
         isScanning = false;
         btn.disabled = false;
+        btnText.textContent = i18n.t('scan_button');
     }
 }
 
@@ -55,7 +86,7 @@ function sortDevices(column) {
         sortDirection = 'asc';
     }
 
-    devicesData.sort((a, b) => {
+    filteredDevices.sort((a, b) => {
         let valA = a[column];
         let valB = b[column];
 
@@ -74,37 +105,47 @@ function sortDevices(column) {
         return 0;
     });
 
-    displayDevices(devicesData);
+    displayDevices(filteredDevices);
 }
 
 function displayDevices(devices) {
-    const deviceList = document.getElementById('deviceList');
+    const deviceTable = document.getElementById('deviceTable');
     
     if (devices.length === 0) {
-        deviceList.innerHTML = `<div class="no-devices"><div class="no-devices-icon">🔍</div><div>${i18n.t('no_devices_found')}</div></div>`;
+        deviceTable.innerHTML = '<div class="empty-state"><div class="empty-state__icon">🔍</div><div class="empty-state__message">' + i18n.t('no_devices_found') + '</div></div>';
         return;
     }
     
     const getSortClass = (column) => {
-        if (sortColumn !== column) return 'sortable';
-        return sortDirection === 'asc' ? 'sort-asc' : 'sort-desc';
+        if (sortColumn !== column) return '';
+        return sortDirection === 'asc' ? 'mdc-data-table__header-cell--sorted-ascending' : 'mdc-data-table__header-cell--sorted-descending';
     };
 
-    deviceList.innerHTML = `
-        <div class="device-list">
-            <table>
+    const checkboxColumn = selectionMode ? `<th class="mdc-data-table__header-cell mdc-data-table__header-cell--checkbox">
+        <div class="mdc-checkbox">
+            <input type="checkbox" class="mdc-checkbox__native-control" id="selectAll" onchange="toggleSelectAll(this.checked)">
+            <div class="mdc-checkbox__background">
+                <div class="mdc-checkbox__checkmark"></div>
+            </div>
+        </div>
+    </th>` : '';
+
+    deviceTable.innerHTML = `
+        <div class="mdc-data-table">
+            <table class="mdc-data-table__table">
                 <thead>
-                    <tr>
-                        <th class="${getSortClass('name')}" onclick="sortDevices('name')">${i18n.t('table_header_name')}</th>
-                        <th class="${getSortClass('type')}" onclick="sortDevices('type')">${i18n.t('table_header_type')}</th>
-                        <th class="${getSortClass('generation')}" onclick="sortDevices('generation')">${i18n.t('table_header_gen')}</th>
-                        <th class="${getSortClass('ip')}" onclick="sortDevices('ip')">${i18n.t('table_header_ip')}</th>
-                        <th class="${getSortClass('mac')}" onclick="sortDevices('mac')">${i18n.t('table_header_mac')}</th>
-                        <th class="${getSortClass('fw')}" onclick="sortDevices('fw')">${i18n.t('table_header_fw')}</th>
-                        <th class="${getSortClass('auth')}" onclick="sortDevices('auth')">${i18n.t('table_header_auth')}</th>
+                    <tr class="mdc-data-table__header-row">
+                        ${checkboxColumn}
+                        <th class="mdc-data-table__header-cell ${getSortClass('name')} ${sortColumn === 'name' ? 'mdc-data-table__header-cell--sorted' : ''}" onclick="sortDevices('name')">${i18n.t('table_header_name')}</th>
+                        <th class="mdc-data-table__header-cell ${getSortClass('type')} ${sortColumn === 'type' ? 'mdc-data-table__header-cell--sorted' : ''}" onclick="sortDevices('type')">${i18n.t('table_header_type')}</th>
+                        <th class="mdc-data-table__header-cell ${getSortClass('generation')} ${sortColumn === 'generation' ? 'mdc-data-table__header-cell--sorted' : ''}" onclick="sortDevices('generation')">${i18n.t('table_header_gen')}</th>
+                        <th class="mdc-data-table__header-cell ${getSortClass('ip')} ${sortColumn === 'ip' ? 'mdc-data-table__header-cell--sorted' : ''}" onclick="sortDevices('ip')">${i18n.t('table_header_ip')}</th>
+                        <th class="mdc-data-table__header-cell ${getSortClass('mac')} ${sortColumn === 'mac' ? 'mdc-data-table__header-cell--sorted' : ''}" onclick="sortDevices('mac')">${i18n.t('table_header_mac')}</th>
+                        <th class="mdc-data-table__header-cell ${getSortClass('fw')} ${sortColumn === 'fw' ? 'mdc-data-table__header-cell--sorted' : ''}" onclick="sortDevices('fw')">${i18n.t('table_header_fw')}</th>
+                        <th class="mdc-data-table__header-cell ${getSortClass('auth')} ${sortColumn === 'auth' ? 'mdc-data-table__header-cell--sorted' : ''}" onclick="sortDevices('auth')">${i18n.t('table_header_auth')}</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="mdc-data-table__content">
                     ${devices.map(device => {
                         const fwClass = device.has_update ? 'fw-outdated' : 'fw-latest';
                         let tooltipText = '';
@@ -116,28 +157,36 @@ function displayDevices(devices) {
                                 showButton = true;
                             } else {
                                 tooltipText = i18n.t('fw_set_password');
-                                showButton = false;
                             }
                         } else {
                             tooltipText = i18n.t('fw_latest');
-                            showButton = false;
                         }
+
+                        const checkboxCell = selectionMode ? `<td class="mdc-data-table__cell mdc-data-table__cell--checkbox">
+                            <div class="mdc-checkbox">
+                                <input type="checkbox" class="mdc-checkbox__native-control device-checkbox" value="${device.ip}" onchange="toggleDevice('${device.ip}', this.checked)" ${selectedDevices.has(device.ip) ? 'checked' : ''}>
+                                <div class="mdc-checkbox__background">
+                                    <div class="mdc-checkbox__checkmark"></div>
+                                </div>
+                            </div>
+                        </td>` : '';
                         
                         return `
-                        <tr>
-                            <td>${escapeHtml(device.name)}</td>
-                            <td><span class="device-type-badge">${escapeHtml(device.type)}</span></td>
-                            <td>${i18n.t('gen_prefix')}${device.generation || 1}</td>
-                            <td><a href="http://${escapeHtml(device.ip)}" target="_blank">${escapeHtml(device.ip)}</a></td>
-                            <td>${escapeHtml(device.mac)}</td>
-                            <td class="fw-cell">
+                        <tr class="mdc-data-table__row ${selectedDevices.has(device.ip) ? 'mdc-data-table__row--selected' : ''}">
+                            ${checkboxCell}
+                            <td class="mdc-data-table__cell">${escapeHtml(device.name)}</td>
+                            <td class="mdc-data-table__cell"><span class="device-type-badge">${escapeHtml(device.type)}</span></td>
+                            <td class="mdc-data-table__cell">${i18n.t('gen_prefix')}${device.generation || 1}</td>
+                            <td class="mdc-data-table__cell"><a href="http://${escapeHtml(device.ip)}" target="_blank">${escapeHtml(device.ip)}</a></td>
+                            <td class="mdc-data-table__cell">${escapeHtml(device.mac)}</td>
+                            <td class="mdc-data-table__cell fw-cell">
                                 <span class="${fwClass}">${escapeHtml(device.fw)}</span>
                                 <div class="fw-tooltip">
                                     <div class="fw-tooltip-text">${tooltipText}</div>
                                     ${showButton ? `<button class="fw-update-btn" onclick="updateFirmware('${device.ip}', event)">${i18n.t('fw_update_btn')}</button>` : ''}
                                 </div>
                             </td>
-                            <td>
+                            <td class="mdc-data-table__cell">
                                 <span class="auth-badge ${device.auth ? 'auth-enabled' : 'auth-disabled'}" 
                                       onclick="toggleAuth('${device.ip}', ${device.auth}, event)"
                                       title="Click to ${device.auth ? 'disable' : 'enable'} authentication">
@@ -152,6 +201,68 @@ function displayDevices(devices) {
     `;
 }
 
+// Selection mode functions
+function toggleSelectionMode() {
+    selectionMode = !selectionMode;
+    const btn = document.getElementById('selectionModeBtn');
+    const batchToolbar = document.getElementById('batchToolbar');
+    
+    btn.style.backgroundColor = selectionMode ? 'rgba(3, 169, 244, 0.12)' : '';
+    batchToolbar.style.display = selectionMode ? 'flex' : 'none';
+    
+    if (!selectionMode) {
+        selectedDevices.clear();
+    }
+    
+    displayDevices(filteredDevices);
+    updateSelectedCount();
+}
+
+function toggleDevice(ip, checked) {
+    if (checked) {
+        selectedDevices.add(ip);
+    } else {
+        selectedDevices.delete(ip);
+    }
+    updateSelectedCount();
+}
+
+function toggleSelectAll(checked) {
+    if (checked) {
+        filteredDevices.forEach(device => selectedDevices.add(device.ip));
+    } else {
+        selectedDevices.clear();
+    }
+    displayDevices(filteredDevices);
+    updateSelectedCount();
+}
+
+function clearSelection() {
+    selectedDevices.clear();
+    displayDevices(filteredDevices);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    document.getElementById('selectedCount').textContent = `${selectedDevices.size} selected`;
+}
+
+// Batch operations (placeholders for v0.7.0)
+function batchUpdate() {
+    if (selectedDevices.size === 0) return;
+    alert(`Batch update for ${selectedDevices.size} devices will be implemented in v0.7.0`);
+}
+
+function batchToggleAuth() {
+    if (selectedDevices.size === 0) return;
+    alert(`Batch auth toggle for ${selectedDevices.size} devices will be implemented in v0.7.0`);
+}
+
+function batchReboot() {
+    if (selectedDevices.size === 0) return;
+    alert(`Batch reboot for ${selectedDevices.size} devices will be implemented in v0.7.0`);
+}
+
 function escapeHtml(text) {
     const map = {
         '&': '&amp;',
@@ -163,8 +274,9 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
+// Keep existing firmware update and auth toggle functions
 async function updateFirmware(ip, event) {
-    event.stopPropagation(); // Prevent tooltip from closing
+    event.stopPropagation();
     
     const btn = event.target;
     const originalText = btn.textContent;
@@ -187,7 +299,6 @@ async function updateFirmware(ip, event) {
             btn.textContent = i18n.t('fw_updated');
             btn.style.background = '#3fb950';
             
-            // Refresh device list after 30 seconds
             setTimeout(() => {
                 startScan();
             }, 30000);
@@ -217,10 +328,6 @@ async function toggleAuth(ip, currentlyEnabled, event) {
     const badge = event.target;
     const originalText = badge.textContent;
     
-    // Check if password is configured
-    const hasPassword = true; // We'll validate server-side
-    
-    // Show appropriate warning
     const enable = !currentlyEnabled;
     const message = enable 
         ? i18n.t('auth_toggle_enable_message', { ip: ip })
@@ -230,7 +337,6 @@ async function toggleAuth(ip, currentlyEnabled, event) {
         return;
     }
     
-    // Disable badge during operation
     badge.classList.add('disabled');
     badge.textContent = i18n.t('auth_toggling');
     
@@ -246,10 +352,8 @@ async function toggleAuth(ip, currentlyEnabled, event) {
         const data = await response.json();
         
         if (response.ok && data.success) {
-            // Update badge appearance
             badge.textContent = i18n.t('auth_toggle_success');
             
-            // Refresh device list after 2 seconds to show new state
             setTimeout(() => {
                 startScan();
             }, 2000);
