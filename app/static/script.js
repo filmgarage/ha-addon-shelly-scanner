@@ -3,6 +3,22 @@ let devicesData = [];
 let sortColumn = 'name';
 let sortDirection = 'asc';
 
+// Initialize i18n and UI
+async function initializeApp() {
+    await i18n.init();
+    updateUIText();
+}
+
+function updateUIText() {
+    document.title = i18n.t('app_title');
+    document.getElementById('pageTitle').textContent = i18n.t('page_title');
+    document.getElementById('scanBtn').textContent = i18n.t('scan_button');
+    document.getElementById('status').textContent = i18n.t('scan_status_ready');
+}
+
+// Wait for DOM and i18n to be ready
+document.addEventListener('DOMContentLoaded', initializeApp);
+
 async function startScan() {
     if (isScanning) return;
     
