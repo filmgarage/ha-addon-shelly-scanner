@@ -2,7 +2,7 @@
 /* Based on Material Design Web Components and HA 2024.4+ styling */
 
 :root {
-  /* HA Color Palette */
+  /* Light mode colors (default) */
   --primary-color: #03a9f4;
   --accent-color: #ff9800;
   --text-primary-color: #212121;
@@ -10,30 +10,49 @@
   --secondary-background-color: #e5e5e5;
   --divider-color: rgba(0, 0, 0, 0.12);
   --card-background-color: #ffffff;
+  --secondary-text-color: #5f6368;
+  --disabled-text-color: #9e9e9e;
   
-  /* Dark theme colors (HA default) */
-  --ha-card-background: #1c1c1c;
-  --primary-text-color: #e1e1e1;
-  --secondary-text-color: #9b9b9b;
-  --disabled-text-color: #6f6f6f;
-  --sidebar-selected-text-color: #ffffff;
-  --sidebar-selected-icon-color: #ffffff;
-  
-  /* Data table specific */
-  --mdc-theme-surface: #111111;
-  --mdc-theme-on-surface: #e1e1e1;
-  --data-table-background-color: #1c1c1c;
+  /* Data table specific - light mode */
+  --mdc-theme-surface: #ffffff;
+  --mdc-theme-on-surface: #212121;
+  --data-table-background-color: #ffffff;
+  --data-table-border-color: rgba(0, 0, 0, 0.12);
   --mdc-ripple-color: rgba(3, 169, 244, 0.12);
+  --row-hover-color: rgba(0, 0, 0, 0.04);
+  --row-border-color: rgba(0, 0, 0, 0.06);
   
   /* State colors */
   --state-icon-active-color: #03a9f4;
-  --state-icon-unavailable-color: #6f6f6f;
+  --state-icon-unavailable-color: #9e9e9e;
   --state-on-color: #66bb6a;
   --state-off-color: #f44336;
   
   /* Spacing */
   --mdc-layout-grid-margin: 24px;
   --mdc-layout-grid-gutter: 24px;
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark theme colors */
+    --text-primary-color: #e1e1e1;
+    --primary-background-color: #111111;
+    --secondary-background-color: #1c1c1c;
+    --card-background-color: #1c1c1c;
+    --secondary-text-color: #9b9b9b;
+    --disabled-text-color: #6f6f6f;
+    --divider-color: rgba(255, 255, 255, 0.12);
+    
+    /* Data table specific - dark mode */
+    --mdc-theme-surface: #111111;
+    --mdc-theme-on-surface: #e1e1e1;
+    --data-table-background-color: #1c1c1c;
+    --data-table-border-color: rgba(255, 255, 255, 0.12);
+    --row-hover-color: rgba(255, 255, 255, 0.04);
+    --row-border-color: rgba(255, 255, 255, 0.06);
+  }
 }
 
 * {
@@ -44,8 +63,8 @@
 
 body {
   font-family: Roboto, sans-serif;
-  background: #111111;
-  color: var(--primary-text-color);
+  background: var(--primary-background-color);
+  color: var(--text-primary-color);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -54,7 +73,7 @@ body {
 /* Material Design Data Table */
 .mdc-data-table {
   background-color: var(--data-table-background-color);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--data-table-border-color);
   border-radius: 4px;
   width: 100%;
 }
@@ -69,7 +88,7 @@ body {
 .mdc-data-table__header-row {
   background-color: transparent;
   height: 56px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid var(--data-table-border-color);
 }
 
 .mdc-data-table__header-cell {
@@ -86,8 +105,8 @@ body {
 }
 
 .mdc-data-table__header-cell:hover {
-  color: var(--primary-text-color);
-  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary-color);
+  background-color: var(--row-hover-color);
 }
 
 .mdc-data-table__header-cell--sorted {
@@ -118,12 +137,12 @@ body {
 /* Table Rows */
 .mdc-data-table__row {
   height: 52px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--row-border-color);
   transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mdc-data-table__row:hover {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: var(--row-hover-color);
 }
 
 .mdc-data-table__row:last-child {
@@ -141,7 +160,7 @@ body {
 .mdc-data-table__cell {
   padding: 0 16px;
   font-size: 14px;
-  color: var(--primary-text-color);
+  color: var(--text-primary-color);
   text-align: left;
 }
 
@@ -210,8 +229,8 @@ body {
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
-  background-color: var(--ha-card-background);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: var(--card-background-color);
+  border-bottom: 1px solid var(--data-table-border-color);
   min-height: 64px;
 }
 
@@ -224,20 +243,18 @@ body {
   height: 40px;
   width: 100%;
   position: relative;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--secondary-background-color);
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--divider-color);
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mdc-text-field:hover {
-  border-color: rgba(255, 255, 255, 0.24);
-  background-color: rgba(255, 255, 255, 0.07);
+  border-color: var(--secondary-text-color);
 }
 
 .mdc-text-field:focus-within {
   border-color: var(--primary-color);
-  background-color: rgba(255, 255, 255, 0.09);
 }
 
 .mdc-text-field__input {
@@ -246,7 +263,7 @@ body {
   padding: 0 16px;
   border: none;
   background: transparent;
-  color: var(--primary-text-color);
+  color: var(--text-primary-color);
   font-size: 14px;
   outline: none;
 }
@@ -311,8 +328,8 @@ body {
 }
 
 .mdc-icon-button:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: var(--primary-text-color);
+  background-color: var(--row-hover-color);
+  color: var(--text-primary-color);
 }
 
 /* Container */
@@ -335,7 +352,7 @@ body {
 .mdc-circular-progress {
   width: 48px;
   height: 48px;
-  border: 3px solid rgba(255, 255, 255, 0.12);
+  border: 3px solid var(--divider-color);
   border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -397,13 +414,19 @@ body {
   left: 50%;
   transform: translateX(-50%);
   margin-bottom: 8px;
-  background: #1c2128;
-  border: 1px solid #30363d;
+  background: var(--card-background-color);
+  border: 1px solid var(--divider-color);
   border-radius: 6px;
   padding: 12px;
   min-width: 200px;
   z-index: 1000;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .fw-tooltip {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .fw-cell:hover .fw-tooltip {
@@ -411,7 +434,7 @@ body {
 }
 
 .fw-tooltip-text {
-  color: #c9d1d9;
+  color: var(--text-primary-color);
   font-size: 13px;
   margin-bottom: 8px;
 }
