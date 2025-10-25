@@ -36,10 +36,11 @@ def check_shelly_device(ip):
     try:
         # Try to connect to Shelly API
         url = f"http://{ip}/shelly"
-        response = requests.get(url, timeout=1)
+        response = requests.get(url, timeout=2)
         
         if response.status_code == 200:
             data = response.json()
+            print(f"Found Shelly device at {ip}: {data.get('type')}")
             device_info = {
                 'ip': ip,
                 'type': data.get('type', 'Unknown'),
@@ -49,25 +50,33 @@ def check_shelly_device(ip):
             }
             
             # Try to get settings if password is provided
-            if ADMIN_PASSWORD:
-                settings_url = f"http://{ip}/settings"
-                try:
+            settings_url = f"http://{ip}/settings"
+            try:
+                if ADMIN_PASSWORD:
                     settings_response = requests.get(
                         settings_url,
                         auth=('admin', ADMIN_PASSWORD),
                         timeout=2
                     )
-                    if settings_response.status_code == 200:
-                        settings = settings_response.json()
-                        device_info['name'] = settings.get('name', 'Unnamed')
-                        device_info['device'] = settings.get('device', {})
-                except:
-                    device_info['name'] = 'Auth Required'
-            else:
-                device_info['name'] = 'No Password Set'
+                else:
+                    # Try without authentication first
+                    settings_response = requests.get(settings_url, timeout=2)
+                
+                if settings_response.status_code == 200:
+                    settings = settings_response.json()
+                    device_info['name'] = settings.get('name', settings.get('device', {}).get('hostname', f"Shelly-{data.get('mac', 'Unknown')[-6:]}"))
+                    device_info['device'] = settings.get('device', {})
+                elif settings_response.status_code == 401:
+                    device_info['name'] = '🔒 Password Required'
+                else:
+                    device_info['name'] = f"Shelly {data.get('type', 'Device')}"
+            except requests.exceptions.Timeout:
+                device_info['name'] = f"Shelly {data.get('type', 'Device')}"
+            except Exception as e:
+                device_info['name'] = f"Shelly {data.get('type', 'Device')}"
                 
             return device_info
-    except:
+    except Exception as e:
         pass
     return None
 
@@ -75,6 +84,8 @@ def scan_network():
     """Scan network for Shelly devices"""
     devices = []
     network = get_network_range()
+    
+    print(f"Starting scan of {network.num_addresses} IP addresses...")
     
     with ThreadPoolExecutor(max_workers=50) as executor:
         futures = {executor.submit(check_shelly_device, str(ip)): ip 
@@ -85,6 +96,7 @@ def scan_network():
             if result:
                 devices.append(result)
     
+    print(f"Scan complete. Found {len(devices)} Shelly device(s)")
     return sorted(devices, key=lambda x: x['ip'])
 
 @app.route('/')
