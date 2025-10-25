@@ -34,22 +34,61 @@ def get_network_range():
 def check_shelly_device(ip):
     """Check if IP is a Shelly device and get info"""
     try:
-        # Try to connect to Shelly API
-        url = f"http://{ip}/shelly"
-        response = requests.get(url, timeout=2)
+        # First try Gen2 API
+        gen2_url = f"http://{ip}/rpc/Shelly.GetDeviceInfo"
+        try:
+            response = requests.get(gen2_url, timeout=2)
+            if response.status_code == 200:
+                data = response.json()
+                print(f"Found Gen2 Shelly device at {ip}: {data.get('model', 'Unknown')}")
+                
+                device_info = {
+                    'ip': ip,
+                    'type': data.get('model', 'Unknown'),
+                    'mac': data.get('mac', 'Unknown'),
+                    'auth': data.get('auth_en', False),
+                    'fw': data.get('fw_id', data.get('ver', 'Unknown')),
+                    'name': data.get('name', f"Shelly {data.get('model', 'Device')}"),
+                    'generation': 2
+                }
+                
+                # Try to get additional config if available
+                if ADMIN_PASSWORD and device_info['auth']:
+                    config_url = f"http://{ip}/rpc/Shelly.GetConfig"
+                    try:
+                        # Gen2+ uses only password in query string, no username
+                        config_response = requests.get(
+                            f"{config_url}?password={ADMIN_PASSWORD}",
+                            timeout=2
+                        )
+                        if config_response.status_code == 200:
+                            config = config_response.json()
+                            if 'sys' in config and 'device' in config['sys']:
+                                device_info['name'] = config['sys']['device'].get('name', device_info['name'])
+                    except:
+                        pass
+                
+                return device_info
+        except:
+            pass
+        
+        # Try Gen1 API
+        gen1_url = f"http://{ip}/shelly"
+        response = requests.get(gen1_url, timeout=2)
         
         if response.status_code == 200:
             data = response.json()
-            print(f"Found Shelly device at {ip}: {data.get('type')}")
+            print(f"Found Gen1 Shelly device at {ip}: {data.get('type')}")
             device_info = {
                 'ip': ip,
                 'type': data.get('type', 'Unknown'),
                 'mac': data.get('mac', 'Unknown'),
                 'auth': data.get('auth', False),
-                'fw': data.get('fw', 'Unknown')
+                'fw': data.get('fw', 'Unknown'),
+                'generation': 1
             }
             
-            # Try to get settings if password is provided
+            # Try to get settings
             settings_url = f"http://{ip}/settings"
             try:
                 if ADMIN_PASSWORD:
@@ -59,7 +98,6 @@ def check_shelly_device(ip):
                         timeout=2
                     )
                 else:
-                    # Try without authentication first
                     settings_response = requests.get(settings_url, timeout=2)
                 
                 if settings_response.status_code == 200:
