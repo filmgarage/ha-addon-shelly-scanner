@@ -10,21 +10,44 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Get ingress entry point from environment
-INGRESS_ENTRY = os.environ.get('INGRESS_ENTRY', '/')
-logger.info(f"Ingress entry point: {INGRESS_ENTRY}")
-
-app = Flask(__name__, static_folder='static', static_url_path=f'{INGRESS_ENTRY}static'.rstrip('/'))
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Support for ingress mode - trust X-Forwarded headers from Home Assistant
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+# Middleware to handle ingress path dynamically
+class IngressMiddleware:
+    def __init__(self, app):
+        self.app = app
+        
+    def __call__(self, environ, start_response):
+        # Get ingress path from header
+        ingress_path = None
+        for key, value in environ.items():
+            if key == 'HTTP_X_INGRESS_PATH':
+                ingress_path = value
+                logger.info(f"Ingress path detected: {ingress_path}")
+                break
+        
+        # Update SCRIPT_NAME to include ingress path
+        if ingress_path:
+            environ['SCRIPT_NAME'] = ingress_path
+            # Also fix PATH_INFO if it includes the ingress path
+            if environ.get('PATH_INFO', '').startswith(ingress_path):
+                environ['PATH_INFO'] = environ['PATH_INFO'][len(ingress_path):]
+        
+        return self.app(environ, start_response)
+
+# Apply ingress middleware
+app.wsgi_app = IngressMiddleware(app.wsgi_app)
+
 # Log all requests
 @app.before_request
 def log_request():
     logger.info(f"Request: {request.method} {request.path}")
-    logger.info(f"Headers: {dict(request.headers)}")
+    logger.info(f"Script root: {request.script_root}")
+    logger.info(f"X-Ingress-Path header: {request.headers.get('X-Ingress-Path', 'Not set')}")
 
 # Log all responses
 @app.after_request
@@ -192,12 +215,19 @@ def debug():
         'script_root': request.script_root,
         'path': request.path,
         'full_path': request.full_path,
+        'ingress_detection': {
+            'X-Ingress-Path': request.headers.get('X-Ingress-Path'),
+            'X-Hass-Source': request.headers.get('X-Hass-Source'),
+        },
         'environment': {
             'INGRESS_PORT': os.environ.get('INGRESS_PORT'),
             'PORT': os.environ.get('PORT'),
             'INGRESS_ENTRY': os.environ.get('INGRESS_ENTRY'),
         },
-        'headers': dict(request.headers)
+        'url_for_static': {
+            'css': request.url_root.rstrip('/') + request.script_root + '/static/ha-style.css',
+            'js': request.url_root.rstrip('/') + request.script_root + '/static/script.js',
+        }
     }), 200
 
 @app.route('/api/scan')
@@ -313,11 +343,14 @@ if __name__ == '__main__':
     port = int(os.environ.get('INGRESS_PORT', os.environ.get('PORT', 8099)))
     
     print("=" * 50, file=sys.stderr)
-    print("Starting Shelly Scanner Flask Application", file=sys.stderr)
+    print("Shelly Scanner v0.5.7", file=sys.stderr)
+    print("=" * 50, file=sys.stderr)
     print(f"Host: 0.0.0.0", file=sys.stderr)
     print(f"Port: {port}", file=sys.stderr)
-    print(f"Admin Password Set: {'Yes' if ADMIN_PASSWORD else 'No'}", file=sys.stderr)
+    print(f"Admin Password: {'Configured' if ADMIN_PASSWORD else 'Not set'}", file=sys.stderr)
     print(f"Debug Mode: True", file=sys.stderr)
+    print("=" * 50, file=sys.stderr)
+    print("Ingress support: Using X-Ingress-Path header", file=sys.stderr)
     print("=" * 50, file=sys.stderr)
     sys.stderr.flush()
     
