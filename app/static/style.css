@@ -177,6 +177,74 @@ td a:hover {
     color: #8b949e;
 }
 
+.fw-latest {
+    color: #3fb950;
+    font-weight: 600;
+}
+
+.fw-outdated {
+    color: #f85149;
+    font-weight: 600;
+}
+
+.fw-cell {
+    position: relative;
+    cursor: pointer;
+}
+
+.fw-tooltip {
+    visibility: hidden;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    background: #1c2128;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 12px;
+    min-width: 200px;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.fw-cell:hover .fw-tooltip {
+    visibility: visible;
+}
+
+.fw-tooltip-text {
+    color: #c9d1d9;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.fw-update-btn {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.fw-update-btn:hover {
+    background: #2ea043;
+}
+
+.fw-update-btn:active {
+    background: #26a641;
+}
+
+.fw-update-btn:disabled {
+    background: #21262d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .loading {
     text-align: center;
     padding: 40px;
