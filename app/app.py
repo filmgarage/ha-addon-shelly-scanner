@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import socket
 import requests
 import os
@@ -187,6 +187,65 @@ def update_device(ip):
                 return jsonify({'success': True, 'message': 'Update started'})
         
         return jsonify({'error': 'Update failed'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/<ip>', methods=['POST'])
+def toggle_auth(ip):
+    """Toggle authentication on device"""
+    try:
+        if not ADMIN_PASSWORD:
+            return jsonify({'error': 'Password not configured in app settings'}), 400
+        
+        data = request.get_json()
+        enable = data.get('enable', False)
+        
+        # First detect which generation
+        device = check_shelly_device(ip)
+        if not device:
+            return jsonify({'error': 'Device not found'}), 404
+        
+        if device['generation'] == 2:
+            # Gen2+ auth toggle via RPC
+            config_url = f"http://{ip}/rpc/Sys.SetConfig"
+            params = {
+                'config': {
+                    'auth': {
+                        'enable': enable,
+                        'user': 'admin',
+                        'pass': ADMIN_PASSWORD if enable else ''
+                    }
+                }
+            }
+            
+            # Current password needed if auth is currently enabled
+            if device['auth']:
+                params['password'] = ADMIN_PASSWORD
+            
+            response = requests.post(config_url, json=params, timeout=5)
+            if response.status_code == 200:
+                return jsonify({'success': True, 'auth_enabled': enable})
+        else:
+            # Gen1 auth toggle
+            settings_url = f"http://{ip}/settings"
+            params = {
+                'login': {
+                    'enabled': enable,
+                    'username': 'admin',
+                    'password': ADMIN_PASSWORD if enable else ''
+                }
+            }
+            
+            # Use current auth if enabled
+            if device['auth']:
+                response = requests.post(settings_url, json=params, auth=('admin', ADMIN_PASSWORD), timeout=5)
+            else:
+                response = requests.post(settings_url, json=params, timeout=5)
+            
+            if response.status_code == 200:
+                return jsonify({'success': True, 'auth_enabled': enable})
+        
+        return jsonify({'error': 'Failed to change authentication'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
