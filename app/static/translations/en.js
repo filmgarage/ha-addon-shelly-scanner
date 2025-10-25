@@ -2,6 +2,7 @@
   "app_title": "Shelly Device Scanner",
   "page_title": "🔌 Shelly Device Scanner",
   "scan_button": "Scan Network",
+  "search_placeholder": "Search devices...",
   "scan_status_ready": "Click 'Scan Network' to begin",
   "scan_status_scanning": "Scanning network...",
   "scan_status_complete": "Scan complete. {count} Shelly device(s) found.",
