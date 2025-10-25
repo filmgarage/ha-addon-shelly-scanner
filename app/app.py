@@ -7,6 +7,10 @@ import ipaddress
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
+# Support for ingress mode - trust X-Forwarded headers from Home Assistant
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 
 def get_local_ip():
@@ -143,6 +147,11 @@ def scan_network():
 def index():
     return render_template('index.html')
 
+@app.route('/health')
+def health():
+    """Health check endpoint for Home Assistant"""
+    return jsonify({'status': 'ok'}), 200
+
 @app.route('/api/scan')
 def scan():
     devices = scan_network()
@@ -250,4 +259,17 @@ def toggle_auth(ip):
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8099, debug=False)
+    import sys
+    
+    # Get port from environment (for ingress mode) or use default
+    port = int(os.environ.get('INGRESS_PORT', os.environ.get('PORT', 8099)))
+    
+    print("=" * 50, file=sys.stderr)
+    print("Starting Shelly Scanner Flask Application", file=sys.stderr)
+    print(f"Host: 0.0.0.0", file=sys.stderr)
+    print(f"Port: {port}", file=sys.stderr)
+    print(f"Admin Password Set: {'Yes' if ADMIN_PASSWORD else 'No'}", file=sys.stderr)
+    print("=" * 50, file=sys.stderr)
+    sys.stderr.flush()
+    
+    app.run(host='0.0.0.0', port=port, debug=False)
