@@ -1,0 +1,23 @@
+{
+  "app_title": "Shelly Apparaat Scanner",
+  "page_title": "🔌 Shelly Apparaat Scanner",
+  "scan_button": "Scan Netwerk",
+  "scan_status_ready": "Klik op 'Scan Netwerk' om te beginnen",
+  "scan_status_scanning": "Bezig met scannen...",
+  "scan_status_complete": "Scan voltooid. {count} Shelly apparaat/apparaten gevonden.",
+  "scan_status_error": "Fout bij scannen: {error}",
+  "loading_message": "Netwerk wordt gescand...",
+  "no_devices_found": "Geen Shelly apparaten gevonden",
+  "error_occurred": "Er is een fout opgetreden",
+  "table_header_name": "Naam",
+  "table_header_type": "Type",
+  "table_header_gen": "Gen",
+  "table_header_ip": "IP Adres",
+  "table_header_mac": "MAC Adres",
+  "table_header_fw": "Firmware",
+  "table_header_auth": "Auth",
+  "auth_enabled": "Aan",
+  "auth_disabled": "Uit",
+  "password_required": "🔒 Wachtwoord Vereist",
+  "gen_prefix": "Gen"
+}
