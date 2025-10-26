@@ -1,5 +1,5 @@
 name: Shelly Device Scanner
-version: "0.5.12"
+version: "0.5.13"
 slug: shelly_scanner
 description: Scan and manage Shelly devices on your network
 arch:
@@ -10,6 +10,8 @@ arch:
   - i386
 init: false
 host_network: true
+ports:
+  8099/tcp: 8099
 panel_icon: mdi:lightbulb-group
 panel_title: Shelly Scanner
 options:
