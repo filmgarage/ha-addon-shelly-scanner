@@ -1,10 +1,4 @@
-# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-dockerfile
 build_from:
   aarch64: ghcr.io/home-assistant/aarch64-base:3.19
   amd64: ghcr.io/home-assistant/amd64-base:3.19
   armv7: ghcr.io/home-assistant/armv7-base:3.19
-labels:
-  org.opencontainers.image.title: "Home Assistant Add-on: Shelly Device Scanner"
-  org.opencontainers.image.description: "Scan and manage Shelly devices on your network"
-  org.opencontainers.image.source: "https://github.com/filmgarage/ha-addon-shelly-scanner"
-  org.opencontainers.image.licenses: "MIT"
