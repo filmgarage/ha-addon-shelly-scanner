@@ -6,6 +6,20 @@ let sortDirection = 'asc';
 let selectionMode = false;
 let selectedDevices = new Set();
 
+// Helper function to get correct API URL with ingress support
+function getApiUrl(endpoint) {
+    // Get the base element
+    const base = document.querySelector('base');
+    if (base && base.href) {
+        // Use base href and ensure proper path joining
+        const baseUrl = base.href.endsWith('/') ? base.href.slice(0, -1) : base.href;
+        const path = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+        return baseUrl + path;
+    }
+    // Fallback to relative URL
+    return endpoint;
+}
+
 // Initialize i18n and UI
 async function initializeApp() {
     await i18n.init();
@@ -61,7 +75,7 @@ async function startScan() {
     deviceTable.innerHTML = '<div class="loading"><div class="mdc-circular-progress"></div><div>' + i18n.t('loading_message') + '</div></div>';
     
     try {
-        const response = await fetch('/api/scan');
+        const response = await fetch(getApiUrl('/api/scan'));
         const devices = await response.json();
         
         devicesData = devices;
@@ -289,7 +303,7 @@ async function updateFirmware(ip, event) {
     btn.textContent = i18n.t('fw_updating');
     
     try {
-        const response = await fetch(`/api/update/${ip}`, {
+        const response = await fetch(getApiUrl(`/api/update/${ip}`), {
             method: 'POST'
         });
         
@@ -341,7 +355,7 @@ async function toggleAuth(ip, currentlyEnabled, event) {
     badge.textContent = i18n.t('auth_toggling');
     
     try {
-        const response = await fetch(`/api/auth/${ip}`, {
+        const response = await fetch(getApiUrl(`/api/auth/${ip}`), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
