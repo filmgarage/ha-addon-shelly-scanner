@@ -19,6 +19,10 @@ RUN \
 # Copy root filesystem
 COPY rootfs /
 
+# Make service scripts executable
+RUN chmod a+x /etc/services.d/shelly-scanner/run \
+    && chmod a+x /etc/services.d/shelly-scanner/finish
+
 # Set working directory
 WORKDIR /app
 
