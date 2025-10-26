@@ -8,16 +8,48 @@ let selectedDevices = new Set();
 
 // Helper function to get correct API URL with ingress support
 function getApiUrl(endpoint) {
-    // Get the base element
-    const base = document.querySelector('base');
-    if (base && base.href) {
-        // Use base href and ensure proper path joining
-        const baseUrl = base.href.endsWith('/') ? base.href.slice(0, -1) : base.href;
-        const path = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
-        return baseUrl + path;
+    // Get the base URL from the <base> tag
+    const baseTag = document.querySelector('base');
+    if (!baseTag) {
+        console.warn('No <base> tag found in document!');
+        return endpoint;
     }
-    // Fallback to relative URL
-    return endpoint;
+    
+    let baseUrl = baseTag.href;
+    
+    // Parse to get just the path component
+    try {
+        const url = new URL(baseUrl, window.location.origin);
+        baseUrl = url.pathname;
+    } catch (e) {
+        console.warn('Failed to parse base URL:', e);
+        baseUrl = '/';
+    }
+    
+    // Ensure no trailing slash (we'll add it correctly)
+    baseUrl = baseUrl.replace(/\/$/, '');
+    
+    // Ensure endpoint starts with /api/
+    if (!endpoint.startsWith('/')) {
+        endpoint = '/' + endpoint;
+    }
+    if (!endpoint.startsWith('/api/')) {
+        endpoint = '/api' + endpoint;
+    }
+    
+    // Combine
+    const fullUrl = baseUrl + endpoint;
+    
+    // Debug logging
+    console.debug('[Ingress Debug]', {
+        baseHref: baseTag.href,
+        baseUrl: baseUrl,
+        endpoint: endpoint,
+        fullUrl: fullUrl,
+        ingressPath: document.querySelector('base').href.includes('api/ingress') ? 'Yes' : 'No'
+    });
+    
+    return fullUrl;
 }
 
 // Initialize i18n and UI
