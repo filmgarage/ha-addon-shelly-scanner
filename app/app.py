@@ -5,6 +5,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ipaddress
 import logging
+import json
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -24,6 +25,7 @@ def log_response(response):
     return response
 
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
+NETWORK_RANGE = os.environ.get('NETWORK_RANGE', '')
 
 def get_local_ip():
     """Get local IP address to determine network range"""
@@ -40,9 +42,19 @@ def get_local_ip():
     return ip
 
 def get_network_range():
-    """Get network range based on local IP"""
+    """Get network range based on configuration or local IP"""
+    # First check if custom network range is configured
+    if NETWORK_RANGE and NETWORK_RANGE.strip():
+        try:
+            network = ipaddress.IPv4Network(NETWORK_RANGE, strict=False)
+            print(f"Using configured network range: {network}")
+            return network
+        except Exception as e:
+            print(f"Invalid network range configured ({NETWORK_RANGE}): {e}")
+            print("Falling back to auto-detection")
+    
+    # Fall back to auto-detection with /24
     local_ip = get_local_ip()
-    # Assume /24 network
     network = ipaddress.IPv4Network(f"{local_ip}/24", strict=False)
     print(f"Scanning network range: {network}")
     return network
@@ -282,6 +294,7 @@ if __name__ == '__main__':
     print(f"Host: 0.0.0.0", file=sys.stderr)
     print(f"Port: {port}", file=sys.stderr)
     print(f"Admin Password: {'Configured' if ADMIN_PASSWORD else 'Not set'}", file=sys.stderr)
+    print(f"Network Range: {NETWORK_RANGE if NETWORK_RANGE else 'Auto-detect (/24)'}", file=sys.stderr)
     print("=" * 50, file=sys.stderr)
     sys.stderr.flush()
     
