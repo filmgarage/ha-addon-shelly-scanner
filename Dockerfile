@@ -5,14 +5,16 @@ FROM $BUILD_FROM
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install Python dependencies
+# Install Python and dependencies
 RUN \
     apk add --no-cache \
         python3 \
         py3-pip \
-    && pip3 install --no-cache-dir \
+        py3-flask \
+        py3-requests \
+    || (pip3 install --no-cache-dir --break-system-packages \
         flask==3.0.0 \
-        requests==2.31.0
+        requests==2.31.0)
 
 # Copy root filesystem
 COPY rootfs /
