@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Shelly Device Scanner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/ha-style.css">
+    <script src="/static/i18n.js"></script>
+</head>
+<body>
+    <div class="ha-view">
+        <!-- Toolbar -->
+        <div class="ha-toolbar">
+            <div class="ha-toolbar__search">
+                <div class="mdc-text-field">
+                    <input 
+                        type="text" 
+                        class="mdc-text-field__input" 
+                        id="searchInput"
+                        placeholder="Search devices..."
+                        autocomplete="off">
+                </div>
+            </div>
+            
+            <button class="mdc-button mdc-button--raised" id="scanBtn" onclick="startScan()">
+                <span id="scanBtnText">Scan Network</span>
+            </button>
+            
+            <button class="mdc-icon-button" id="selectionModeBtn" onclick="toggleSelectionMode()" title="Toggle selection mode">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Status message -->
+        <div class="ha-toolbar" style="min-height: auto; border-bottom: none; padding: 8px 24px;">
+            <div id="statusMessage" style="font-size: 14px; color: var(--secondary-text-color);"></div>
+        </div>
+
+        <!-- Batch action toolbar (hidden by default) -->
+        <div class="ha-toolbar" id="batchToolbar" style="display: none; background-color: rgba(3, 169, 244, 0.12);">
+            <span id="selectedCount" style="font-weight: 500;">0 selected</span>
+            <button class="mdc-button" onclick="batchUpdate()">
+                <span>Update Selected</span>
+            </button>
+            <button class="mdc-button" onclick="batchToggleAuth()">
+                <span>Toggle Auth</span>
+            </button>
+            <button class="mdc-button" onclick="batchReboot()">
+                <span>Reboot Selected</span>
+            </button>
+            <button class="mdc-button" onclick="clearSelection()">
+                <span>Clear Selection</span>
+            </button>
+        </div>
+
+        <!-- Data Table -->
+        <div id="deviceTable"></div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
