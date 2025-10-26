@@ -343,7 +343,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('INGRESS_PORT', os.environ.get('PORT', 8099)))
     
     print("=" * 50, file=sys.stderr)
-    print("Shelly Scanner v0.5.7", file=sys.stderr)
+    print("Shelly Scanner v0.5.9", file=sys.stderr)
     print("=" * 50, file=sys.stderr)
     print(f"Host: 0.0.0.0", file=sys.stderr)
     print(f"Port: {port}", file=sys.stderr)
