@@ -1,8 +1,8 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-dockerfile
 build_from:
-  aarch64: "ghcr.io/home-assistant/aarch64-base-python:3.15-alpine3.19"
-  amd64: "ghcr.io/home-assistant/amd64-base-python:3.15-alpine3.19"
-  armv7: "ghcr.io/home-assistant/armv7-base-python:3.15-alpine3.19"
+  aarch64: "ghcr.io/home-assistant/aarch64-base:3.20"
+  amd64: "ghcr.io/home-assistant/amd64-base:3.20"
+  armv7: "ghcr.io/home-assistant/armv7-base:3.20"
 labels:
   org.opencontainers.image.title: "Home Assistant Add-on: Shelly Device Scanner"
   org.opencontainers.image.description: "Scan and manage Shelly devices on your network"
