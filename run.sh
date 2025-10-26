@@ -4,11 +4,18 @@ bashio::log.info "Starting Shelly Scanner..."
 
 # Get configuration
 export ADMIN_PASSWORD=$(bashio::config 'admin_password')
+export NETWORK_RANGE=$(bashio::config 'network_range')
 
 if bashio::var.has_value "${ADMIN_PASSWORD}"; then
     bashio::log.info "Admin password configured"
 else
     bashio::log.warning "No admin password set - limited functionality"
+fi
+
+if bashio::var.has_value "${NETWORK_RANGE}"; then
+    bashio::log.info "Custom network range configured: ${NETWORK_RANGE}"
+else
+    bashio::log.info "Using auto-detected network range (/24)"
 fi
 
 # Check if we're running in ingress mode
