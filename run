@@ -1,0 +1,48 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the Shelly Scanner service
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
+
+# Declare variables
+declare admin_password
+declare network_range
+
+bashio::log.info "Starting Shelly Scanner..."
+
+# Get configuration
+admin_password=$(bashio::config 'admin_password')
+network_range=$(bashio::config 'network_range')
+
+# Export environment variables for the Python app
+export ADMIN_PASSWORD="${admin_password}"
+export NETWORK_RANGE="${network_range}"
+
+# Log configuration (without showing password)
+if bashio::var.has_value "${admin_password}"; then
+    bashio::log.info "Admin password configured"
+else
+    bashio::log.warning "No admin password set - limited functionality"
+fi
+
+if bashio::var.has_value "${network_range}"; then
+    bashio::log.info "Custom network range configured: ${network_range}"
+else
+    bashio::log.info "Using auto-detected network range (/24)"
+fi
+
+# Check if we're running in ingress mode
+if bashio::config.true 'ingress'; then
+    bashio::log.info "Running in ingress mode"
+    export INGRESS_PORT=8099
+else
+    bashio::log.info "Running in standalone mode"
+    export PORT=8099
+fi
+
+# Change to app directory
+cd /app || bashio::exit.nok "Could not change to /app directory"
+
+# Start the Flask application
+bashio::log.info "Starting Flask application..."
+exec python3 -u app.py
