@@ -26,6 +26,7 @@ map:
   - ssl
 panel_icon: mdi:lightbulb-group
 panel_title: Shelly Scanner
+image: ghcr.io/filmgarage/shelly-scanner-{arch}
 options:
   admin_password: ""
   network_range: ""
