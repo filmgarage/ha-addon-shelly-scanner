@@ -5,113 +5,58 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import ipaddress
 import logging
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Initialize Flask app
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
-# ============================================================================
-# CRITICAL: Home Assistant Ingress Support
-# ============================================================================
-
-# 1. ProxyFix - Trust headers from Home Assistant (reverse proxy)
-# This MUST be applied before any request processing
-app.wsgi_app = ProxyFix(
-    app.wsgi_app,
-    x_for=1,        # X-Forwarded-For
-    x_proto=1,      # X-Forwarded-Proto (http/https)
-    x_host=1,       # X-Forwarded-Host
-    x_prefix=1,     # X-Forwarded-Prefix (ingress path)
-    x_port=1        # X-Forwarded-Port
-)
-
-# 2. Request handler for Ingress
+# Log all requests
 @app.before_request
-def handle_ingress_request():
-    """
-    Handle Home Assistant Ingress by reading X-Ingress-Path header.
-    
-    When accessed via ingress, Home Assistant adds:
-    - X-Ingress-Path: /api/hassio_ingress/[addon-id]/
-    - X-Hass-Source: ingress
-    
-    ProxyFix converts this to SCRIPT_NAME, which Flask uses for
-    url_for() and request.script_root
-    """
-    ingress_path = request.headers.get('X-Ingress-Path')
-    hass_source = request.headers.get('X-Hass-Source')
-    
-    if ingress_path:
-        logger.info(f"Ingress request detected - Path: {ingress_path}")
-        logger.debug(f"  Source: {hass_source}")
-        logger.debug(f"  Script Root: {request.script_root}")
-        logger.debug(f"  Path: {request.path}")
+def log_request():
+    logger.info(f"Request: {request.method} {request.path}")
 
-# 3. After request logging for debugging
+# Log all responses
 @app.after_request
 def log_response(response):
-    """Log all responses for debugging"""
-    if request.path != '/debug':  # Don't spam the log for debug endpoint
-        logger.debug(f"Response: {response.status_code} {request.method} {request.path}")
+    logger.info(f"Response: {response.status_code} for {request.path}")
     return response
 
-# ============================================================================
-# Configuration from Environment
-# ============================================================================
-
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
-INGRESS_PORT = int(os.environ.get('INGRESS_PORT', os.environ.get('PORT', 8099)))
-
-logger.info(f"Configuration loaded:")
-logger.info(f"  Port: {INGRESS_PORT}")
-logger.info(f"  Admin Password: {'Set' if ADMIN_PASSWORD else 'Not set'}")
-
-# ============================================================================
-# Shelly Device Discovery Functions
-# ============================================================================
 
 def get_local_ip():
-    """Get local IP address to determine network range for scanning"""
+    """Get local IP address to determine network range"""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # Connect to a non-routable address to determine local IP
         s.connect(('10.255.255.255', 1))
         ip = s.getsockname()[0]
-        logger.info(f"Local IP detected: {ip}")
-        return ip
+        print(f"Local IP detected: {ip}")
     except Exception as e:
-        logger.warning(f"Error getting local IP: {e}")
-        return '127.0.0.1'
+        print(f"Error getting local IP: {e}")
+        ip = '127.0.0.1'
     finally:
         s.close()
+    return ip
 
 def get_network_range():
-    """Get network range based on local IP (assumes /24 subnet)"""
+    """Get network range based on local IP"""
     local_ip = get_local_ip()
+    # Assume /24 network
     network = ipaddress.IPv4Network(f"{local_ip}/24", strict=False)
-    logger.info(f"Scanning network range: {network}")
+    print(f"Scanning network range: {network}")
     return network
 
 def check_shelly_device(ip):
-    """
-    Check if IP is a Shelly device and retrieve info.
-    Supports both Gen1 (HTTP REST) and Gen2+ (RPC) devices.
-    """
+    """Check if IP is a Shelly device and get info. Supports both Gen1 and Gen2+ devices."""
     try:
-        # Try Gen2+ API (RPC-based)
+        # First try Gen2+ API (RPC-based)
         gen2_url = f"http://{ip}/rpc/Shelly.GetDeviceInfo"
         try:
             response = requests.get(gen2_url, timeout=2)
             if response.status_code == 200:
                 data = response.json()
-                logger.info(f"Found Gen2 device at {ip}: {data.get('model', 'Unknown')}")
+                print(f"Found Gen2 Shelly device at {ip}: {data.get('model', 'Unknown')}")
                 
                 device_info = {
                     'ip': ip,
@@ -123,10 +68,11 @@ def check_shelly_device(ip):
                     'generation': 2
                 }
                 
-                # Try to get additional config if authentication is needed
+                # Try to get additional config if available (Gen2+ only uses password, no username)
                 if ADMIN_PASSWORD and device_info['auth']:
+                    config_url = f"http://{ip}/rpc/Shelly.GetConfig"
                     try:
-                        config_url = f"http://{ip}/rpc/Shelly.GetConfig"
+                        # Gen2+ uses only password in query string, no username needed
                         config_response = requests.get(
                             f"{config_url}?password={ADMIN_PASSWORD}",
                             timeout=2
@@ -135,12 +81,12 @@ def check_shelly_device(ip):
                             config = config_response.json()
                             if 'sys' in config and 'device' in config['sys']:
                                 device_info['name'] = config['sys']['device'].get('name', device_info['name'])
-                    except Exception as e:
-                        logger.debug(f"Could not retrieve Gen2 config from {ip}: {e}")
+                    except:
+                        pass
                 
                 return device_info
-        except Exception as e:
-            logger.debug(f"Gen2 check failed for {ip}: {e}")
+        except:
+            pass
         
         # Try Gen1 API (HTTP-based)
         gen1_url = f"http://{ip}/shelly"
@@ -148,8 +94,7 @@ def check_shelly_device(ip):
         
         if response.status_code == 200:
             data = response.json()
-            logger.info(f"Found Gen1 device at {ip}: {data.get('type')}")
-            
+            print(f"Found Gen1 Shelly device at {ip}: {data.get('type')}")
             device_info = {
                 'ip': ip,
                 'type': data.get('type', 'Unknown'),
@@ -159,42 +104,44 @@ def check_shelly_device(ip):
                 'generation': 1
             }
             
-            # Try to get device name from settings
+            # Try to get settings (Gen1 uses 'admin' username)
+            settings_url = f"http://{ip}/settings"
             try:
-                settings_url = f"http://{ip}/settings"
                 if ADMIN_PASSWORD:
+                    # Gen1 requires username 'admin' and password
                     settings_response = requests.get(
                         settings_url,
                         auth=('admin', ADMIN_PASSWORD),
                         timeout=2
                     )
                 else:
+                    # Try without authentication
                     settings_response = requests.get(settings_url, timeout=2)
                 
                 if settings_response.status_code == 200:
                     settings = settings_response.json()
                     device_info['name'] = settings.get('name', settings.get('device', {}).get('hostname', f"Shelly-{data.get('mac', 'Unknown')[-6:]}"))
+                    device_info['device'] = settings.get('device', {})
                 elif settings_response.status_code == 401:
                     device_info['name'] = '🔒 Password Required'
                 else:
                     device_info['name'] = f"Shelly {data.get('type', 'Device')}"
-            except Exception as e:
-                logger.debug(f"Could not retrieve Gen1 settings from {ip}: {e}")
+            except requests.exceptions.Timeout:
                 device_info['name'] = f"Shelly {data.get('type', 'Device')}"
-            
+            except Exception as e:
+                device_info['name'] = f"Shelly {data.get('type', 'Device')}"
+                
             return device_info
-            
     except Exception as e:
-        logger.debug(f"Device check failed for {ip}: {e}")
-    
+        pass
     return None
 
 def scan_network():
-    """Scan network for Shelly devices using thread pool"""
+    """Scan network for Shelly devices"""
     devices = []
     network = get_network_range()
     
-    logger.info(f"Starting scan of {network.num_addresses} IP addresses...")
+    print(f"Starting scan of {network.num_addresses} IP addresses...")
     
     with ThreadPoolExecutor(max_workers=50) as executor:
         futures = {executor.submit(check_shelly_device, str(ip)): ip 
@@ -205,16 +152,11 @@ def scan_network():
             if result:
                 devices.append(result)
     
-    logger.info(f"Scan complete. Found {len(devices)} device(s)")
+    print(f"Scan complete. Found {len(devices)} Shelly device(s)")
     return sorted(devices, key=lambda x: x['ip'])
-
-# ============================================================================
-# Flask Routes
-# ============================================================================
 
 @app.route('/')
 def index():
-    """Main page - serves the Shelly Scanner UI"""
     return render_template('index.html')
 
 @app.route('/health')
@@ -222,83 +164,126 @@ def health():
     """Health check endpoint for Home Assistant"""
     return jsonify({'status': 'ok'}), 200
 
-@app.route('/debug')
-def debug_info():
-    """Debug endpoint to diagnose ingress issues"""
-    return jsonify({
-        'status': 'ok',
-        'mode': 'ingress' if request.headers.get('X-Ingress-Path') else 'direct',
-        'request_info': {
-            'script_root': request.script_root,
-            'path': request.path,
-            'base_url': request.base_url,
-            'url_root': request.url_root,
-            'host': request.host,
-            'remote_addr': request.remote_addr,
-        },
-        'headers': {
-            'X-Ingress-Path': request.headers.get('X-Ingress-Path', 'Not set'),
-            'X-Hass-Source': request.headers.get('X-Hass-Source', 'Not set'),
-            'X-Forwarded-For': request.headers.get('X-Forwarded-For', 'Not set'),
-            'X-Forwarded-Proto': request.headers.get('X-Forwarded-Proto', 'Not set'),
-            'X-Forwarded-Host': request.headers.get('X-Forwarded-Host', 'Not set'),
-            'X-Forwarded-Prefix': request.headers.get('X-Forwarded-Prefix', 'Not set'),
-        },
-        'endpoints': {
-            'scan': request.base_url.rstrip('/') + request.script_root.rstrip('/') + '/api/scan',
-        }
-    }), 200
-
 @app.route('/api/scan')
 def scan():
-    """Scan network and return found Shelly devices"""
-    try:
-        devices = scan_network()
-        return jsonify(devices), 200
-    except Exception as e:
-        logger.error(f"Scan failed: {e}")
-        return jsonify({'error': str(e)}), 500
+    devices = scan_network()
+    return jsonify(devices)
 
 @app.route('/api/device/<ip>')
 def device_info(ip):
-    """Get detailed info for a specific device"""
+    """Get detailed info for specific device"""
+    device = check_shelly_device(ip)
+    if device:
+        return jsonify(device)
+    return jsonify({'error': 'Device not found'}), 404
+
+@app.route('/api/update/<ip>', methods=['POST'])
+def update_device(ip):
+    """Trigger firmware update on device"""
     try:
+        # First detect which generation
         device = check_shelly_device(ip)
-        if device:
-            return jsonify(device), 200
-        return jsonify({'error': 'Device not found'}), 404
+        if not device:
+            return jsonify({'error': 'Device not found'}), 404
+        
+        if device['generation'] == 2:
+            # Gen2+ update via RPC
+            update_url = f"http://{ip}/rpc/Shelly.Update"
+            params = {'stage': 'stable'}
+            if ADMIN_PASSWORD:
+                params['password'] = ADMIN_PASSWORD
+            
+            response = requests.post(update_url, json=params, timeout=5)
+            if response.status_code == 200:
+                return jsonify({'success': True, 'message': 'Update started'})
+        else:
+            # Gen1 update
+            update_url = f"http://{ip}/ota?update=true"
+            if ADMIN_PASSWORD:
+                response = requests.get(update_url, auth=('admin', ADMIN_PASSWORD), timeout=5)
+            else:
+                response = requests.get(update_url, timeout=5)
+            
+            if response.status_code == 200:
+                return jsonify({'success': True, 'message': 'Update started'})
+        
+        return jsonify({'error': 'Update failed'}), 500
     except Exception as e:
-        logger.error(f"Device info failed for {ip}: {e}")
         return jsonify({'error': str(e)}), 500
 
-# ============================================================================
-# Application Entry Point
-# ============================================================================
+@app.route('/api/auth/<ip>', methods=['POST'])
+def toggle_auth(ip):
+    """Toggle authentication on device"""
+    try:
+        if not ADMIN_PASSWORD:
+            return jsonify({'error': 'Password not configured in app settings'}), 400
+        
+        data = request.get_json()
+        enable = data.get('enable', False)
+        
+        # First detect which generation
+        device = check_shelly_device(ip)
+        if not device:
+            return jsonify({'error': 'Device not found'}), 404
+        
+        if device['generation'] == 2:
+            # Gen2+ auth toggle via RPC
+            config_url = f"http://{ip}/rpc/Sys.SetConfig"
+            params = {
+                'config': {
+                    'auth': {
+                        'enable': enable,
+                        'user': 'admin',
+                        'pass': ADMIN_PASSWORD if enable else ''
+                    }
+                }
+            }
+            
+            # Current password needed if auth is currently enabled
+            if device['auth']:
+                params['password'] = ADMIN_PASSWORD
+            
+            response = requests.post(config_url, json=params, timeout=5)
+            if response.status_code == 200:
+                return jsonify({'success': True, 'auth_enabled': enable})
+        else:
+            # Gen1 auth toggle
+            settings_url = f"http://{ip}/settings"
+            params = {
+                'login': {
+                    'enabled': enable,
+                    'username': 'admin',
+                    'password': ADMIN_PASSWORD if enable else ''
+                }
+            }
+            
+            # Use current auth if enabled
+            if device['auth']:
+                response = requests.post(settings_url, json=params, auth=('admin', ADMIN_PASSWORD), timeout=5)
+            else:
+                response = requests.post(settings_url, json=params, timeout=5)
+            
+            if response.status_code == 200:
+                return jsonify({'success': True, 'auth_enabled': enable})
+        
+        return jsonify({'error': 'Failed to change authentication'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     import sys
     
-    print("=" * 60, file=sys.stderr)
-    print("Shelly Device Scanner - Home Assistant Add-on", file=sys.stderr)
-    print("=" * 60, file=sys.stderr)
-    print(f"Version: 0.5.9", file=sys.stderr)
+    # Get port from environment (for ingress mode) or use default
+    port = int(os.environ.get('INGRESS_PORT', os.environ.get('PORT', 8099)))
+    
+    print("=" * 50, file=sys.stderr)
+    print("Shelly Scanner v0.5.9", file=sys.stderr)
+    print("=" * 50, file=sys.stderr)
     print(f"Host: 0.0.0.0", file=sys.stderr)
-    print(f"Port: {INGRESS_PORT}", file=sys.stderr)
+    print(f"Port: {port}", file=sys.stderr)
     print(f"Admin Password: {'Configured' if ADMIN_PASSWORD else 'Not set'}", file=sys.stderr)
-    print(f"Ingress Support: Enabled (X-Ingress-Path header support)", file=sys.stderr)
-    print("=" * 60, file=sys.stderr)
-    print("Access via Ingress: Home Assistant Sidebar → Shelly Scanner", file=sys.stderr)
-    print("Access via Direct: http://[your-host]:{}/".format(INGRESS_PORT), file=sys.stderr)
-    print("Debug Endpoint: http://[your-host]:{}/debug".format(INGRESS_PORT), file=sys.stderr)
-    print("=" * 60, file=sys.stderr)
+    print("=" * 50, file=sys.stderr)
     sys.stderr.flush()
     
-    # Run Flask development server
-    # For production, use WSGI server like gunicorn
-    app.run(
-        host='0.0.0.0',
-        port=INGRESS_PORT,
-        debug=False,
-        threaded=True,
-        use_reloader=False  # Important for add-on environment
-    )
+    # Enable debug mode for troubleshooting
+    app.run(host='0.0.0.0', port=port, debug=True)
