@@ -28,6 +28,25 @@ The admin password configured on your Shelly devices. This is required to read t
 
 **Note:** Leave empty (`""`) if your Shelly devices don't have password protection enabled.
 
+### Option: Network Range Configuration
+
+By default, the add-on scans your local network with a /24 subnet mask (e.g., 192.168.1.0/24).
+
+To scan a different network range:
+
+1. Go to Settings → Add-ons → Shelly Device Scanner → Configuration
+2. Enter the network range in CIDR notation, for example:
+   - `192.168.10.0/24` - Scan 192.168.10.0 to 192.168.10.255
+   - `192.168.10.0/22` - Scan 192.168.8.0 to 192.168.11.255 (1024 addresses)
+   - `10.0.0.0/8` - Scan entire 10.x.x.x network (not recommended, very slow)
+
+3. Leave empty to use auto-detection (default)
+
+Examples:
+- Home network: `192.168.1.0/24`
+- Larger subnet: `192.168.0.0/22`
+- Different IP range: `10.10.20.0/24`
+
 ## Usage
 
 1. Open the add-on via the Home Assistant sidebar (look for the "Shelly Scanner" icon)
