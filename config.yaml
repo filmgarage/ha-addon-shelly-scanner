@@ -1,5 +1,5 @@
 name: Shelly Device Scanner
-version: "0.5.16"
+version: "0.5.17"
 url: https://github.com/filmgarage/ha-addon-shelly-scanner
 slug: shelly_scanner
 description: Scan and manage Shelly devices on your network
