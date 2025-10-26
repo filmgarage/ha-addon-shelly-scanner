@@ -8,7 +8,17 @@ class I18n {
 
     async loadLanguage(lang) {
         try {
-            const response = await fetch(`/static/translations/${lang}.json`);
+            // Get proper URL with ingress path support
+            const base = document.querySelector('base');
+            let url;
+            if (base && base.href) {
+                const baseUrl = base.href.endsWith('/') ? base.href.slice(0, -1) : base.href;
+                url = `${baseUrl}/static/translations/${lang}.json`;
+            } else {
+                url = `/static/translations/${lang}.json`;
+            }
+            
+            const response = await fetch(url);
             if (response.ok) {
                 this.translations[lang] = await response.json();
                 this.currentLanguage = lang;
