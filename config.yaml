@@ -1,8 +1,8 @@
-name: Shelly Device Scanner
-version: "0.6.3"
-slug: shelly_scanner
-description: Scan and manage Shelly devices on your network
-url: "https://github.com/filmgarage/ha-addon-shelly-scanner"
+name: Shelly HA Manager
+version: "0.0.7"
+slug: shelly_ha_manager
+description: Manage your Shelly devices directly from Home Assistant
+url: "https://github.com/filmgarage/ha-addon-shelly-manager"
 arch:
   - aarch64
   - amd64
@@ -16,15 +16,9 @@ ports:
 homeassistant_api: true
 hassio_api: true
 hassio_role: admin
-auth_api: true
-map:
-  - addon_config:rw
 panel_icon: mdi:lightbulb-group
-panel_title: Shelly Scanner
-image: ghcr.io/filmgarage/shelly-scanner-{arch}
+panel_title: Shelly Manager
 options:
   admin_password: ""
-  network_range: ""
 schema:
   admin_password: password
-  network_range: str?
